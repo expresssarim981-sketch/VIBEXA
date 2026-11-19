@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Setup Flutter
@@ -19,13 +19,12 @@ jobs:
         with:
           channel: stable
 
-      - name: Create Flutter Android Project
+      - name: Create Flutter Project
         run: flutter create --org com.zyvoraq --project-name vibexa vibexa_build
 
       - name: Create VIBEXA App
-        working-directory: vibexa_build
         run: |
-          cat > lib/main.dart <<'EOF'
+          cat > vibexa_build/lib/main.dart <<'EOF'
           import 'package:flutter/material.dart';
 
           void main() {
@@ -38,8 +37,8 @@ jobs:
             @override
             Widget build(BuildContext context) {
               return MaterialApp(
-                debugShowCheckedModeBanner: false,
                 title: 'VIBEXA',
+                debugShowCheckedModeBanner: false,
                 theme: ThemeData.dark().copyWith(
                   scaffoldBackgroundColor: const Color(0xFF10091F),
                   colorScheme: ColorScheme.fromSeed(
@@ -125,6 +124,7 @@ jobs:
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 10,
+                      runSpacing: 10,
                       children: [
                         category('🎤 Voice'),
                         category('🎵 Music'),
@@ -235,13 +235,14 @@ jobs:
           }
           EOF
 
-      - name: Build APK
-        working-directory: vibexa_build
-        run: flutter build apk --release
+      - name: Build Android APK
+        run: |
+          cd vibexa_build
+          flutter pub get
+          flutter build apk --release
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: VIBEXA-APK
           path: vibexa_build/build/app/outputs/flutter-apk/app-release.apk
-        

@@ -1,4 +1,5 @@
-name: Build VIBEXA APK
+
+name: VIBEXA APK Build
 
 'on':
   workflow_dispatch:
@@ -11,8 +12,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -20,677 +27,420 @@ jobs:
           channel: stable
 
       - name: Create Flutter Project
-        run: flutter create --platforms=android vibexa_build
+        run: flutter create --org com.zyvoraq --project-name vibexa vibexa
 
-      - name: Create VIBEXA App
+      - name: Create App Code
         run: |
-          cat > vibexa_build/lib/main.dart <<'EOF'
-import 'package:flutter/material.dart';
+          cat > vibexa/lib/main.dart <<'EOF'
+          import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const VibexaApp());
-}
+          void main() {
+            runApp(const VibexaApp());
+          }
 
-const purple = Color(0xFF8B5CF6);
-const pink = Color(0xFFFF4DA6);
-const dark = Color(0xFF100C1D);
-const card = Color(0xFF211934);
+          const purple = Color(0xFF8B5CF6);
+          const pink = Color(0xFFEC4899);
 
-class VibexaApp extends StatelessWidget {
-  const VibexaApp({super.key});
+          class VibexaApp extends StatelessWidget {
+            const VibexaApp({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'VIBEXA',
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: dark,
-        colorScheme: const ColorScheme.dark(
-          primary: purple,
-          secondary: pink,
-        ),
-      ),
-      home: const LoginPage(),
-    );
-  }
-}
-
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
-
-  @override
-  State<LoginPage> createState() => _LoginPageState();
-}
-
-class _LoginPageState extends State<LoginPage> {
-  bool signup = false;
-
-  final phone = TextEditingController();
-  final name = TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFF35165F),
-              dark,
-              Color(0xFF120D20),
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(25),
-            child: Column(
-              children: [
-                const SizedBox(height: 45),
-
-                Container(
-                  height: 100,
-                  width: 100,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [purple, pink],
-                    ),
-                    borderRadius: BorderRadius.circular(30),
+            @override
+            Widget build(BuildContext context) {
+              return MaterialApp(
+                debugShowCheckedModeBanner: false,
+                title: 'VIBEXA',
+                theme: ThemeData(
+                  brightness: Brightness.dark,
+                  scaffoldBackgroundColor: const Color(0xFF100D1C),
+                  colorScheme: ColorScheme.dark(
+                    primary: purple,
+                    secondary: pink,
                   ),
-                  child: const Icon(
-                    Icons.mic,
-                    size: 55,
-                    color: Colors.white,
-                  ),
+                  useMaterial3: true,
                 ),
+                home: const WelcomePage(),
+              );
+            }
+          }
 
-                const SizedBox(height: 20),
+          class WelcomePage extends StatefulWidget {
+            const WelcomePage({super.key});
 
-                const Text(
-                  'VIBEXA',
-                  style: TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 5,
-                  ),
-                ),
+            @override
+            State<WelcomePage> createState() => _WelcomePageState();
+          }
 
-                const Text(
-                  'Connect • Party • Enjoy',
-                  style: TextStyle(color: Colors.white70),
-                ),
+          class _WelcomePageState extends State<WelcomePage> {
+            int selectedIndex = 0;
 
-                const SizedBox(height: 45),
+            final pages = const [
+              HomePage(),
+              DiscoverPage(),
+              PartyPage(),
+              MessagesPage(),
+              ProfilePage(),
+            ];
 
-                Text(
-                  signup ? 'Create Account' : 'Welcome Back',
-                  style: const TextStyle(
-                    fontSize: 27,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-
-                Text(
-                  signup
-                      ? 'Join the VIBEXA community'
-                      : 'Login to your account',
-                  style: const TextStyle(color: Colors.white60),
-                ),
-
-                const SizedBox(height: 30),
-
-                if (signup)
-                  input(name, 'Your Name', Icons.person),
-
-                const SizedBox(height: 15),
-
-                input(phone, 'Mobile Number', Icons.phone_android),
-
-                const SizedBox(height: 25),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 55,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: purple,
-                      foregroundColor: Colors.white,
-                    ),
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const MainPage(),
-                        ),
-                      );
-                    },
-                    child: Text(
-                      signup ? 'CREATE ACCOUNT' : 'LOGIN',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ),
-
-                TextButton(
-                  onPressed: () {
+            @override
+            Widget build(BuildContext context) {
+              return Scaffold(
+                body: pages[selectedIndex],
+                bottomNavigationBar: NavigationBar(
+                  backgroundColor: const Color(0xFF191426),
+                  indicatorColor: purple.withOpacity(0.25),
+                  selectedIndex: selectedIndex,
+                  onDestinationSelected: (index) {
                     setState(() {
-                      signup = !signup;
+                      selectedIndex = index;
                     });
                   },
-                  child: Text(
-                    signup
-                        ? 'Already have an account? Login'
-                        : 'Create New Account',
-                    style: const TextStyle(color: purple),
-                  ),
+                  destinations: const [
+                    NavigationDestination(
+                      icon: Icon(Icons.home_outlined),
+                      selectedIcon: Icon(Icons.home),
+                      label: 'Home',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.explore_outlined),
+                      label: 'Discover',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.groups_outlined),
+                      label: 'Party',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.chat_bubble_outline),
+                      label: 'Messages',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.person_outline),
+                      label: 'Profile',
+                    ),
+                  ],
                 ),
+              );
+            }
+          }
 
-                const SizedBox(height: 25),
+          class HomePage extends StatelessWidget {
+            const HomePage({super.key});
 
-                const Text(
-                  'VIBEXA • YOUR SOCIAL PARTY WORLD',
-                  style: TextStyle(
-                    color: Colors.white38,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget input(
-    TextEditingController controller,
-    String hint,
-    IconData icon,
-  ) {
-    return TextField(
-      controller: controller,
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        hintText: hint,
-        prefixIcon: Icon(icon, color: purple),
-        filled: true,
-        fillColor: card,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide.none,
-        ),
-      ),
-    );
-  }
-}
-
-class MainPage extends StatefulWidget {
-  const MainPage({super.key});
-
-  @override
-  State<MainPage> createState() => _MainPageState();
-}
-
-class _MainPageState extends State<MainPage> {
-  int index = 0;
-
-  final pages = const [
-    HomePage(),
-    DiscoverPage(),
-    PartyPage(),
-    MessagesPage(),
-    ProfilePage(),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: pages[index],
-      bottomNavigationBar: NavigationBar(
-        backgroundColor: card,
-        selectedIndex: index,
-        indicatorColor: purple.withOpacity(0.3),
-        onDestinationSelected: (value) {
-          setState(() {
-            index = value;
-          });
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.explore_outlined),
-            label: 'Discover',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.mic),
-            label: 'Party',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.chat_bubble_outline),
-            label: 'Messages',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            label: 'Profile',
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(18),
-          children: [
-            Row(
-              children: [
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'VIBEXA',
-                        style: TextStyle(
-                          fontSize: 27,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 3,
+            @override
+            Widget build(BuildContext context) {
+              return SafeArea(
+                child: ListView(
+                  padding: const EdgeInsets.all(20),
+                  children: [
+                    Row(
+                      children: [
+                        const Text(
+                          'VIBEXA',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: purple,
+                          ),
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.deepPurple.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.monetization_on,
+                                  color: Colors.amber),
+                              SizedBox(width: 5),
+                              Text('0 Coins'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 25),
+                    Container(
+                      height: 160,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [purple, pink],
+                        ),
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: const Padding(
+                        padding: EdgeInsets.all(22),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'WELCOME TO VIBEXA',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 10),
+                            Text(
+                              'Connect • Talk • Make Friends',
+                              style: TextStyle(fontSize: 15),
+                            ),
+                          ],
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 25),
+                    const Text(
+                      'Live Rooms',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    const RoomCard(
+                      title: 'Friends Hangout',
+                      subtitle: 'Come and meet new friends',
+                      icon: Icons.favorite,
+                      color: Colors.pink,
+                    ),
+                    const RoomCard(
+                      title: 'Music Lounge',
+                      subtitle: 'Music and entertainment',
+                      icon: Icons.music_note,
+                      color: Colors.purple,
+                    ),
+                    const RoomCard(
+                      title: 'Fun Party',
+                      subtitle: 'Play and enjoy together',
+                      icon: Icons.celebration,
+                      color: Colors.orange,
+                    ),
+                    const RoomCard(
+                      title: 'PK Battle',
+                      subtitle: 'Challenge your friends',
+                      icon: Icons.flash_on,
+                      color: Colors.blue,
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Popular Users',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    const Row(
+                      children: [
+                        UserAvatar(name: 'Ali', color: Colors.blue),
+                        UserAvatar(name: 'Sara', color: Colors.pink),
+                        UserAvatar(name: 'Ahmed', color: Colors.orange),
+                        UserAvatar(name: 'Maya', color: Colors.purple),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }
+          }
+
+          class RoomCard extends StatelessWidget {
+            final String title;
+            final String subtitle;
+            final IconData icon;
+            final Color color;
+
+            const RoomCard({
+              super.key,
+              required this.title,
+              required this.subtitle,
+              required this.icon,
+              required this.color,
+            });
+
+            @override
+            Widget build(BuildContext context) {
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF201B30),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 28,
+                      backgroundColor: color.withOpacity(0.2),
+                      child: Icon(icon, color: color, size: 28),
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            subtitle,
+                            style: const TextStyle(color: Colors.white70),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.arrow_forward_ios, size: 16),
+                  ],
+                ),
+              );
+            }
+          }
+
+          class UserAvatar extends StatelessWidget {
+            final String name;
+            final Color color;
+
+            const UserAvatar({
+              super.key,
+              required this.name,
+              required this.color,
+            });
+
+            @override
+            Widget build(BuildContext context) {
+              return Expanded(
+                child: Column(
+                  children: [
+                    CircleAvatar(
+                      radius: 30,
+                      backgroundColor: color,
+                      child: const Icon(
+                        Icons.person,
+                        size: 35,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(name),
+                  ],
+                ),
+              );
+            }
+          }
+
+          class DiscoverPage extends StatelessWidget {
+            const DiscoverPage({super.key});
+
+            @override
+            Widget build(BuildContext context) {
+              return const SimplePage(
+                title: 'Discover',
+                icon: Icons.explore,
+                description: 'Discover new friends and interesting people.',
+              );
+            }
+          }
+
+          class PartyPage extends StatelessWidget {
+            const PartyPage({super.key});
+
+            @override
+            Widget build(BuildContext context) {
+              return const SimplePage(
+                title: 'Party Rooms',
+                icon: Icons.groups,
+                description: 'Join voice rooms and enjoy with friends.',
+              );
+            }
+          }
+
+          class MessagesPage extends StatelessWidget {
+            const MessagesPage({super.key});
+
+            @override
+            Widget build(BuildContext context) {
+              return const SimplePage(
+                title: 'Messages',
+                icon: Icons.chat,
+                description: 'Your conversations will appear here.',
+              );
+            }
+          }
+
+          class ProfilePage extends StatelessWidget {
+            const ProfilePage({super.key});
+
+            @override
+            Widget build(BuildContext context) {
+              return const SimplePage(
+                title: 'My Profile',
+                icon: Icons.person,
+                description: 'Manage your VIBEXA profile.',
+              );
+            }
+          }
+
+          class SimplePage extends StatelessWidget {
+            final String title;
+            final IconData icon;
+            final String description;
+
+            const SimplePage({
+              super.key,
+              required this.title,
+              required this.icon,
+              required this.description,
+            });
+
+            @override
+            Widget build(BuildContext context) {
+              return SafeArea(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(icon, size: 90, color: purple),
+                      const SizedBox(height: 20),
                       Text(
-                        'Welcome to the party',
-                        style: TextStyle(color: Colors.white60),
+                        title,
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Padding(
+                        padding: const EdgeInsets.all(25),
+                        child: Text(
+                          description,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.white70,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
-                const Icon(
-                  Icons.monetization_on,
-                  color: Colors.amber,
-                ),
-                const Text(' 1000'),
-                const SizedBox(width: 10),
-                const Icon(Icons.notifications_outlined),
-              ],
-            ),
-
-            const SizedBox(height: 25),
-
-            Container(
-              padding: const EdgeInsets.all(25),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [purple, pink],
-                ),
-                borderRadius: BorderRadius.circular(25),
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('YOUR WORLD'),
-                  SizedBox(height: 10),
-                  Text(
-                    'Meet New Friends\n& Have Fun!',
-                    style: TextStyle(
-                      fontSize: 27,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  Text('Explore voice rooms and make friends'),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 25),
-
-            title('Categories'),
-
-            const SizedBox(height: 15),
-
-            Row(
-              children: [
-                category(Icons.mic, 'Voice'),
-                category(Icons.music_note, 'Music'),
-                category(Icons.chat, 'Chat'),
-                category(Icons.sports_esports, 'Games'),
-              ],
-            ),
-
-            const SizedBox(height: 25),
-
-            title('Trending Rooms'),
-
-            const SizedBox(height: 15),
-
-            room('🎤', 'Friends Forever', 'Voice • 8 People'),
-            room('🎵', 'Music Lovers', 'Music • 12 People'),
-            room('❤️', 'Love & Friendship', 'Chat • 6 People'),
-            room('🎮', 'Gaming Zone', 'Games • 15 People'),
-
-            const SizedBox(height: 25),
-
-            title('Create Your Party'),
-
-            const SizedBox(height: 15),
-
-            feature(
-              Icons.add_circle,
-              'Create Voice Room',
-              'Start your own party',
-            ),
-
-            feature(
-              Icons.sports_esports,
-              'Start PK Battle',
-              'Challenge your friends',
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class DiscoverPage extends StatelessWidget {
-  const DiscoverPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Discover'),
-        backgroundColor: dark,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(18),
-        children: [
-          TextField(
-            decoration: InputDecoration(
-              hintText: 'Search rooms or people',
-              prefixIcon: const Icon(Icons.search),
-              filled: true,
-              fillColor: card,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          ),
-          const SizedBox(height: 25),
-          title('Popular Rooms'),
-          const SizedBox(height: 15),
-          room('🎤', 'Pakistan Voice Club', 'Voice • 20 People'),
-          room('🎵', 'Music Night', 'Music • 18 People'),
-          room('❤️', 'Friendship Lounge', 'Chat • 10 People'),
-          room('🎮', 'Game Masters', 'Games • 14 People'),
-        ],
-      ),
-    );
-  }
-}
-
-class PartyPage extends StatelessWidget {
-  const PartyPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Party'),
-        backgroundColor: dark,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(18),
-        children: [
-          feature(Icons.mic, 'Create Voice Room', 'Start a new room'),
-          feature(Icons.people, 'Join a Party', 'Meet new people'),
-          feature(Icons.sports_esports, 'PK Battle', 'Battle with friends'),
-          feature(Icons.games, 'Mini Games', 'Play with friends'),
-        ],
-      ),
-    );
-  }
-}
-
-class MessagesPage extends StatelessWidget {
-  const MessagesPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Messages'),
-        backgroundColor: dark,
-      ),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.chat_bubble_outline, size: 70, color: purple),
-            SizedBox(height: 15),
-            Text(
-              'Your messages will appear here',
-              style: TextStyle(color: Colors.white60),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Profile'),
-        backgroundColor: dark,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          const SizedBox(height: 20),
-          const CircleAvatar(
-            radius: 55,
-            backgroundColor: purple,
-            child: Icon(Icons.person, size: 60),
-          ),
-          const SizedBox(height: 15),
-          const Text(
-            'VIBEXA USER',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'ID: VX100001',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white60),
-          ),
-          const SizedBox(height: 25),
-          Row(
-            children: [
-              stat('Followers', '0'),
-              stat('Following', '0'),
-              stat('Friends', '0'),
-            ],
-          ),
-          const SizedBox(height: 25),
-          feature(Icons.edit, 'Edit Profile', 'Update your information'),
-          feature(Icons.account_balance_wallet, 'My Wallet', 'Manage coins'),
-          feature(Icons.card_giftcard, 'My Gifts', 'View gifts'),
-          feature(Icons.favorite, 'My Friends', 'Friends list'),
-          feature(Icons.history, 'History', 'Activity history'),
-          feature(Icons.settings, 'Settings', 'App settings'),
-          feature(Icons.logout, 'Logout', 'Sign out'),
-        ],
-      ),
-    );
-  }
-}
-
-Widget title(String text) {
-  return Text(
-    text,
-    style: const TextStyle(
-      fontSize: 20,
-      fontWeight: FontWeight.bold,
-    ),
-  );
-}
-
-Widget category(IconData icon, String text) {
-  return Expanded(
-    child: Column(
-      children: [
-        Container(
-          height: 58,
-          width: 58,
-          decoration: BoxDecoration(
-            color: card,
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Icon(icon, color: purple, size: 27),
-        ),
-        const SizedBox(height: 8),
-        Text(text, style: const TextStyle(fontSize: 12)),
-      ],
-    ),
-  );
-}
-
-Widget room(String emoji, String name, String subtitle) {
-  return Container(
-    margin: const EdgeInsets.only(bottom: 12),
-    padding: const EdgeInsets.all(15),
-    decoration: BoxDecoration(
-      color: card,
-      borderRadius: BorderRadius.circular(18),
-    ),
-    child: Row(
-      children: [
-        CircleAvatar(
-          radius: 27,
-          backgroundColor: purple.withOpacity(0.2),
-          child: Text(emoji, style: const TextStyle(fontSize: 25)),
-        ),
-        const SizedBox(width: 13),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                name,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                subtitle,
-                style: const TextStyle(color: Colors.white60),
-              ),
-            ],
-          ),
-        ),
-        const Icon(Icons.arrow_forward_ios, color: purple, size: 16),
-      ],
-    ),
-  );
-}
-
-Widget feature(IconData icon, String name, String subtitle) {
-  return Container(
-    margin: const EdgeInsets.only(bottom: 12),
-    padding: const EdgeInsets.all(17),
-    decoration: BoxDecoration(
-      color: card,
-      borderRadius: BorderRadius.circular(18),
-    ),
-    child: Row(
-      children: [
-        Icon(icon, color: purple, size: 30),
-        const SizedBox(width: 15),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                name,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                subtitle,
-                style: const TextStyle(color: Colors.white60),
-              ),
-            ],
-          ),
-        ),
-        const Icon(Icons.arrow_forward_ios, size: 15),
-      ],
-    ),
-  );
-}
-
-Widget stat(String name, String value) {
-  return Expanded(
-    child: Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: card,
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            name,
-            style: const TextStyle(
-              color: Colors.white60,
-              fontSize: 11,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-EOF
+              );
+            }
+          }
+          EOF
 
       - name: Build APK
         run: |
-          cd vibexa_build
+          cd vibexa
           flutter pub get
           flutter build apk --release
 
@@ -698,4 +448,4 @@ EOF
         uses: actions/upload-artifact@v4
         with:
           name: VIBEXA-APK
-          path: vibexa_build/build/app/outputs/flutter-apk/app-release.apk
+          path: vibexa/build/app/outputs/flutter-apk/app-release.apk

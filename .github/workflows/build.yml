@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Flutter
@@ -19,31 +19,12 @@ jobs:
         with:
           channel: stable
 
-      - name: Create Flutter Project Files
+      - name: Create Flutter Android Project
+        run: flutter create --org com.zyvoraq --project-name vibexa vibexa_build
+
+      - name: Create VIBEXA App
+        working-directory: vibexa_build
         run: |
-          mkdir -p lib
-
-          cat > pubspec.yaml <<'EOF'
-          name: vibexa
-          description: VIBEXA Social Party App
-          publish_to: none
-          version: 1.0.0+1
-
-          environment:
-            sdk: '>=3.0.0 <4.0.0'
-
-          dependencies:
-            flutter:
-              sdk: flutter
-
-          dev_dependencies:
-            flutter_test:
-              sdk: flutter
-
-          flutter:
-            uses-material-design: true
-          EOF
-
           cat > lib/main.dart <<'EOF'
           import 'package:flutter/material.dart';
 
@@ -82,10 +63,10 @@ jobs:
             int selectedIndex = 0;
 
             final rooms = [
-              ['🔥 Pakistani Party', '24 people', 'PK'],
-              ['💜 Friendship Lounge', '18 people', 'FR'],
-              ['🎵 Music & Fun', '32 people', 'MF'],
-              ['🌙 Late Night Talk', '12 people', 'NT'],
+              ['Pakistani Party', '24 people', '🔥'],
+              ['Friendship Lounge', '18 people', '💜'],
+              ['Music & Fun', '32 people', '🎵'],
+              ['Late Night Talk', '12 people', '🌙'],
             ];
 
             @override
@@ -101,11 +82,11 @@ jobs:
                       letterSpacing: 3,
                     ),
                   ),
-                  actions: [
-                    const Icon(Icons.monetization_on, color: Colors.amber),
-                    const SizedBox(width: 5),
-                    const Text('1000'),
-                    const SizedBox(width: 15),
+                  actions: const [
+                    Icon(Icons.monetization_on, color: Colors.amber),
+                    SizedBox(width: 5),
+                    Center(child: Text('1000')),
+                    SizedBox(width: 15),
                   ],
                 ),
                 body: ListView(
@@ -119,10 +100,7 @@ jobs:
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Connect. Talk. Enjoy.',
-                      style: TextStyle(color: Colors.white70),
-                    ),
+                    const Text('Connect. Talk. Enjoy.'),
                     const SizedBox(height: 20),
                     TextField(
                       decoration: InputDecoration(
@@ -147,7 +125,6 @@ jobs:
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 10,
-                      runSpacing: 10,
                       children: [
                         category('🎤 Voice'),
                         category('🎵 Music'),
@@ -164,7 +141,7 @@ jobs:
                       ),
                     ),
                     const SizedBox(height: 12),
-                    ...rooms.map((room) => roomCard(room)),
+                    ...rooms.map(roomCard),
                     const SizedBox(height: 20),
                     Container(
                       padding: const EdgeInsets.all(20),
@@ -198,9 +175,7 @@ jobs:
                   backgroundColor: const Color(0xFF1A1028),
                   selectedIndex: selectedIndex,
                   onDestinationSelected: (index) {
-                    setState(() {
-                      selectedIndex = index;
-                    });
+                    setState(() => selectedIndex = index);
                   },
                   destinations: const [
                     NavigationDestination(
@@ -246,16 +221,11 @@ jobs:
                   ),
                   title: Text(room[0]),
                   subtitle: Text('👥 ${room[1]}'),
-                  trailing: const Icon(
-                    Icons.arrow_forward_ios,
-                    color: Colors.purpleAccent,
-                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios),
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text(
-                          'Voice room coming soon!',
-                        ),
+                        content: Text('Voice room coming soon!'),
                       ),
                     );
                   },
@@ -265,14 +235,13 @@ jobs:
           }
           EOF
 
-      - name: Install Dependencies
-        run: flutter pub get
-
-      - name: Build Android APK
+      - name: Build APK
+        working-directory: vibexa_build
         run: flutter build apk --release
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VIBEXA-Android-APK
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: VIBEXA-APK
+          path: vibexa_build/build/app/outputs/flutter-apk/app-release.apk
+        

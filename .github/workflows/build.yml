@@ -1,7 +1,7 @@
 
 name: VIBEXA APK Build
 
-'on':
+on:
   workflow_dispatch:
   push:
     branches:
@@ -9,6 +9,7 @@ name: VIBEXA APK Build
 
 jobs:
   build:
+    name: Build VIBEXA Android APK
     runs-on: ubuntu-latest
 
     steps:
@@ -29,17 +30,32 @@ jobs:
       - name: Create Flutter Project
         run: flutter create --org com.zyvoraq --project-name vibexa vibexa
 
-      - name: Create App Code
-        run: |
-          cat > vibexa/lib/main.dart <<'EOF'
-          import 'package:flutter/material.dart';
+      - name: Install Supabase Package
+        working-directory: vibexa
+        run: flutter pub add supabase_flutter
 
-          void main() {
+      - name: Configure VIBEXA App
+        working-directory: vibexa
+        run: |
+          cat > lib/main.dart <<'EOF'
+          import 'package:flutter/material.dart';
+          import 'package:supabase_flutter/supabase_flutter.dart';
+
+          Future<void> main() async {
+            WidgetsFlutterBinding.ensureInitialized();
+
+            const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+            const supabaseKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+
+            if (supabaseUrl.isNotEmpty && supabaseKey.isNotEmpty) {
+              await Supabase.initialize(
+                url: supabaseUrl,
+                anonKey: supabaseKey,
+              );
+            }
+
             runApp(const VibexaApp());
           }
-
-          const purple = Color(0xFF8B5CF6);
-          const pink = Color(0xFFEC4899);
 
           class VibexaApp extends StatelessWidget {
             const VibexaApp({super.key});
@@ -49,386 +65,39 @@ jobs:
               return MaterialApp(
                 debugShowCheckedModeBanner: false,
                 title: 'VIBEXA',
-                theme: ThemeData(
-                  brightness: Brightness.dark,
-                  scaffoldBackgroundColor: const Color(0xFF100D1C),
-                  colorScheme: ColorScheme.dark(
-                    primary: purple,
-                    secondary: pink,
-                  ),
-                  useMaterial3: true,
-                ),
-                home: const WelcomePage(),
+                theme: ThemeData.dark(),
+                home: const HomeScreen(),
               );
             }
           }
 
-          class WelcomePage extends StatefulWidget {
-            const WelcomePage({super.key});
-
-            @override
-            State<WelcomePage> createState() => _WelcomePageState();
-          }
-
-          class _WelcomePageState extends State<WelcomePage> {
-            int selectedIndex = 0;
-
-            final pages = const [
-              HomePage(),
-              DiscoverPage(),
-              PartyPage(),
-              MessagesPage(),
-              ProfilePage(),
-            ];
+          class HomeScreen extends StatelessWidget {
+            const HomeScreen({super.key});
 
             @override
             Widget build(BuildContext context) {
               return Scaffold(
-                body: pages[selectedIndex],
-                bottomNavigationBar: NavigationBar(
-                  backgroundColor: const Color(0xFF191426),
-                  indicatorColor: purple.withOpacity(0.25),
-                  selectedIndex: selectedIndex,
-                  onDestinationSelected: (index) {
-                    setState(() {
-                      selectedIndex = index;
-                    });
-                  },
-                  destinations: const [
-                    NavigationDestination(
-                      icon: Icon(Icons.home_outlined),
-                      selectedIcon: Icon(Icons.home),
-                      label: 'Home',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(Icons.explore_outlined),
-                      label: 'Discover',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(Icons.groups_outlined),
-                      label: 'Party',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(Icons.chat_bubble_outline),
-                      label: 'Messages',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(Icons.person_outline),
-                      label: 'Profile',
-                    ),
-                  ],
-                ),
-              );
-            }
-          }
-
-          class HomePage extends StatelessWidget {
-            const HomePage({super.key});
-
-            @override
-            Widget build(BuildContext context) {
-              return SafeArea(
-                child: ListView(
-                  padding: const EdgeInsets.all(20),
-                  children: [
-                    Row(
-                      children: [
-                        const Text(
-                          'VIBEXA',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: purple,
-                          ),
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.deepPurple.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Row(
-                            children: [
-                              Icon(Icons.monetization_on,
-                                  color: Colors.amber),
-                              SizedBox(width: 5),
-                              Text('0 Coins'),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 25),
-                    Container(
-                      height: 160,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [purple, pink],
-                        ),
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      child: const Padding(
-                        padding: EdgeInsets.all(22),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'WELCOME TO VIBEXA',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(height: 10),
-                            Text(
-                              'Connect • Talk • Make Friends',
-                              style: TextStyle(fontSize: 15),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 25),
-                    const Text(
-                      'Live Rooms',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    const RoomCard(
-                      title: 'Friends Hangout',
-                      subtitle: 'Come and meet new friends',
-                      icon: Icons.favorite,
-                      color: Colors.pink,
-                    ),
-                    const RoomCard(
-                      title: 'Music Lounge',
-                      subtitle: 'Music and entertainment',
-                      icon: Icons.music_note,
-                      color: Colors.purple,
-                    ),
-                    const RoomCard(
-                      title: 'Fun Party',
-                      subtitle: 'Play and enjoy together',
-                      icon: Icons.celebration,
-                      color: Colors.orange,
-                    ),
-                    const RoomCard(
-                      title: 'PK Battle',
-                      subtitle: 'Challenge your friends',
-                      icon: Icons.flash_on,
-                      color: Colors.blue,
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Popular Users',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    const Row(
-                      children: [
-                        UserAvatar(name: 'Ali', color: Colors.blue),
-                        UserAvatar(name: 'Sara', color: Colors.pink),
-                        UserAvatar(name: 'Ahmed', color: Colors.orange),
-                        UserAvatar(name: 'Maya', color: Colors.purple),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            }
-          }
-
-          class RoomCard extends StatelessWidget {
-            final String title;
-            final String subtitle;
-            final IconData icon;
-            final Color color;
-
-            const RoomCard({
-              super.key,
-              required this.title,
-              required this.subtitle,
-              required this.icon,
-              required this.color,
-            });
-
-            @override
-            Widget build(BuildContext context) {
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF201B30),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 28,
-                      backgroundColor: color.withOpacity(0.2),
-                      child: Icon(icon, color: color, size: 28),
-                    ),
-                    const SizedBox(width: 15),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            subtitle,
-                            style: const TextStyle(color: Colors.white70),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Icon(Icons.arrow_forward_ios, size: 16),
-                  ],
-                ),
-              );
-            }
-          }
-
-          class UserAvatar extends StatelessWidget {
-            final String name;
-            final Color color;
-
-            const UserAvatar({
-              super.key,
-              required this.name,
-              required this.color,
-            });
-
-            @override
-            Widget build(BuildContext context) {
-              return Expanded(
-                child: Column(
-                  children: [
-                    CircleAvatar(
-                      radius: 30,
-                      backgroundColor: color,
-                      child: const Icon(
-                        Icons.person,
-                        size: 35,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(name),
-                  ],
-                ),
-              );
-            }
-          }
-
-          class DiscoverPage extends StatelessWidget {
-            const DiscoverPage({super.key});
-
-            @override
-            Widget build(BuildContext context) {
-              return const SimplePage(
-                title: 'Discover',
-                icon: Icons.explore,
-                description: 'Discover new friends and interesting people.',
-              );
-            }
-          }
-
-          class PartyPage extends StatelessWidget {
-            const PartyPage({super.key});
-
-            @override
-            Widget build(BuildContext context) {
-              return const SimplePage(
-                title: 'Party Rooms',
-                icon: Icons.groups,
-                description: 'Join voice rooms and enjoy with friends.',
-              );
-            }
-          }
-
-          class MessagesPage extends StatelessWidget {
-            const MessagesPage({super.key});
-
-            @override
-            Widget build(BuildContext context) {
-              return const SimplePage(
-                title: 'Messages',
-                icon: Icons.chat,
-                description: 'Your conversations will appear here.',
-              );
-            }
-          }
-
-          class ProfilePage extends StatelessWidget {
-            const ProfilePage({super.key});
-
-            @override
-            Widget build(BuildContext context) {
-              return const SimplePage(
-                title: 'My Profile',
-                icon: Icons.person,
-                description: 'Manage your VIBEXA profile.',
-              );
-            }
-          }
-
-          class SimplePage extends StatelessWidget {
-            final String title;
-            final IconData icon;
-            final String description;
-
-            const SimplePage({
-              super.key,
-              required this.title,
-              required this.icon,
-              required this.description,
-            });
-
-            @override
-            Widget build(BuildContext context) {
-              return SafeArea(
-                child: Center(
+                backgroundColor: const Color(0xFF101020),
+                body: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(icon, size: 90, color: purple),
-                      const SizedBox(height: 20),
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 28,
+                      const Text(
+                        'VIBEXA',
+                        style: TextStyle(
+                          fontSize: 42,
                           fontWeight: FontWeight.bold,
+                          color: Colors.purpleAccent,
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      Padding(
-                        padding: const EdgeInsets.all(25),
-                        child: Text(
-                          description,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.white70,
-                          ),
-                        ),
+                      const SizedBox(height: 12),
+                      const Text('Connect the World'),
+                      const SizedBox(height: 25),
+                      Text(
+                        const String.fromEnvironment('SUPABASE_URL').isNotEmpty
+                            ? 'Supabase configured'
+                            : 'Supabase not configured',
+                        style: const TextStyle(color: Colors.greenAccent),
                       ),
                     ],
                   ),
@@ -438,11 +107,16 @@ jobs:
           }
           EOF
 
-      - name: Build APK
+      - name: Build Release APK
+        working-directory: vibexa
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          cd vibexa
           flutter pub get
-          flutter build apk --release
+          flutter build apk --release \
+            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+            --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

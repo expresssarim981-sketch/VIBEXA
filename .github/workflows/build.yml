@@ -30,75 +30,387 @@ jobs:
       - name: Create Flutter Project
         run: flutter create --org com.zyvoraq --project-name vibexa vibexa
 
-      - name: Install Supabase Package
+      - name: Install Supabase
         working-directory: vibexa
         run: flutter pub add supabase_flutter
 
-      - name: Configure VIBEXA App
+      - name: Create VIBEXA App
         working-directory: vibexa
         run: |
           cat > lib/main.dart <<'EOF'
           import 'package:flutter/material.dart';
           import 'package:supabase_flutter/supabase_flutter.dart';
 
+          const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+          const supabaseKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+
           Future<void> main() async {
             WidgetsFlutterBinding.ensureInitialized();
 
-            const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
-            const supabaseKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+            final configured =
+                supabaseUrl.isNotEmpty && supabaseKey.isNotEmpty;
 
-            if (supabaseUrl.isNotEmpty && supabaseKey.isNotEmpty) {
+            if (configured) {
               await Supabase.initialize(
                 url: supabaseUrl,
                 anonKey: supabaseKey,
               );
             }
 
-            runApp(const VibexaApp());
+            runApp(VibexaApp(configured: configured));
           }
 
           class VibexaApp extends StatelessWidget {
-            const VibexaApp({super.key});
+            final bool configured;
+
+            const VibexaApp({super.key, required this.configured});
 
             @override
             Widget build(BuildContext context) {
               return MaterialApp(
                 debugShowCheckedModeBanner: false,
                 title: 'VIBEXA',
-                theme: ThemeData.dark(),
-                home: const HomeScreen(),
+                theme: ThemeData(
+                  brightness: Brightness.dark,
+                  scaffoldBackgroundColor: const Color(0xFF101020),
+                  colorScheme: ColorScheme.fromSeed(
+                    seedColor: Colors.purpleAccent,
+                    brightness: Brightness.dark,
+                  ),
+                  inputDecorationTheme: InputDecorationTheme(
+                    filled: true,
+                    fillColor: const Color(0xFF202035),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+                home: configured
+                    ? const AuthGate()
+                    : const ConfigErrorScreen(),
               );
             }
           }
 
-          class HomeScreen extends StatelessWidget {
-            const HomeScreen({super.key});
+          class ConfigErrorScreen extends StatelessWidget {
+            const ConfigErrorScreen({super.key});
+
+            @override
+            Widget build(BuildContext context) {
+              return const Scaffold(
+                body: Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Text(
+                      'VIBEXA configuration is missing. Please check GitHub Secrets.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              );
+            }
+          }
+
+          class AuthGate extends StatelessWidget {
+            const AuthGate({super.key});
+
+            @override
+            Widget build(BuildContext context) {
+              final client = Supabase.instance.client;
+
+              return StreamBuilder<AuthState>(
+                stream: client.auth.onAuthStateChange,
+                builder: (context, snapshot) {
+                  if (client.auth.currentSession != null) {
+                    return const WelcomeScreen();
+                  }
+                  return const AuthScreen();
+                },
+              );
+            }
+          }
+
+          class AuthScreen extends StatefulWidget {
+            const AuthScreen({super.key});
+
+            @override
+            State<AuthScreen> createState() => _AuthScreenState();
+          }
+
+          class _AuthScreenState extends State<AuthScreen> {
+            final emailController = TextEditingController();
+            final passwordController = TextEditingController();
+            final nameController = TextEditingController();
+
+            bool isLogin = true;
+            bool loading = false;
+            bool obscurePassword = true;
+            String message = '';
+
+            @override
+            void dispose() {
+              emailController.dispose();
+              passwordController.dispose();
+              nameController.dispose();
+              super.dispose();
+            }
+
+            void showMessage(String text) {
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(text)),
+              );
+            }
+
+            Future<void> submit() async {
+              final email = emailController.text.trim();
+              final password = passwordController.text;
+
+              if (email.isEmpty || password.isEmpty) {
+                showMessage('Please enter email and password.');
+                return;
+              }
+
+              if (!isLogin && nameController.text.trim().isEmpty) {
+                showMessage('Please enter your full name.');
+                return;
+              }
+
+              if (!email.contains('@') || password.length < 6) {
+                showMessage('Enter a valid email and password of 6+ characters.');
+                return;
+              }
+
+              setState(() {
+                loading = true;
+                message = '';
+              });
+
+              try {
+                final client = Supabase.instance.client;
+
+                if (isLogin) {
+                  await client.auth.signInWithPassword(
+                    email: email,
+                    password: password,
+                  );
+                  showMessage('Login successful!');
+                } else {
+                  final response = await client.auth.signUp(
+                    email: email,
+                    password: password,
+                    data: {
+                      'full_name': nameController.text.trim(),
+                    },
+                  );
+
+                  if (response.session == null) {
+                    setState(() {
+                      message = 'Account created! Please check your email and confirm your account before login.';
+                    });
+                  } else {
+                    showMessage('Account created successfully!');
+                  }
+                }
+              } on AuthException catch (error) {
+                showMessage(error.message);
+              } catch (error) {
+                showMessage('Something went wrong. Please try again.');
+              } finally {
+                if (mounted) setState(() => loading = false);
+              }
+            }
+
+            Future<void> forgotPassword() async {
+              final email = emailController.text.trim();
+
+              if (email.isEmpty || !email.contains('@')) {
+                showMessage('Enter your email address first.');
+                return;
+              }
+
+              try {
+                await Supabase.instance.client.auth.resetPasswordForEmail(email);
+                showMessage('Password reset email sent. Check your inbox.');
+              } on AuthException catch (error) {
+                showMessage(error.message);
+              } catch (error) {
+                showMessage('Could not send reset email.');
+              }
+            }
 
             @override
             Widget build(BuildContext context) {
               return Scaffold(
-                backgroundColor: const Color(0xFF101020),
+                body: SafeArea(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(26),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Icon(
+                            Icons.public,
+                            size: 75,
+                            color: Colors.purpleAccent,
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'VIBEXA',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 38,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.purpleAccent,
+                            ),
+                          ),
+                          const Text(
+                            'Connect the World',
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 35),
+                          Text(
+                            isLogin ? 'Welcome Back' : 'Create Your Account',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 25,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 25),
+                          if (!isLogin) ...[
+                            TextField(
+                              controller: nameController,
+                              decoration: const InputDecoration(
+                                labelText: 'Full Name',
+                                prefixIcon: Icon(Icons.person_outline),
+                              ),
+                            ),
+                            const SizedBox(height: 15),
+                          ],
+                          TextField(
+                            controller: emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: const InputDecoration(
+                              labelText: 'Email Address',
+                              prefixIcon: Icon(Icons.email_outlined),
+                            ),
+                          ),
+                          const SizedBox(height: 15),
+                          TextField(
+                            controller: passwordController,
+                            obscureText: obscurePassword,
+                            decoration: InputDecoration(
+                              labelText: 'Password',
+                              prefixIcon: const Icon(Icons.lock_outline),
+                              suffixIcon: IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    obscurePassword = !obscurePassword;
+                                  });
+                                },
+                                icon: Icon(
+                                  obscurePassword
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (isLogin)
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: forgotPassword,
+                                child: const Text('Forgot Password?'),
+                              ),
+                            ),
+                          if (message.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Text(
+                                message,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.greenAccent,
+                                ),
+                              ),
+                            ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            height: 52,
+                            child: ElevatedButton(
+                              onPressed: loading ? null : submit,
+                              child: loading
+                                  ? const CircularProgressIndicator()
+                                  : Text(
+                                      isLogin ? 'LOGIN' : 'CREATE ACCOUNT',
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(height: 15),
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                isLogin = !isLogin;
+                                message = '';
+                              });
+                            },
+                            child: Text(
+                              isLogin
+                                  ? 'New here? Create an account'
+                                  : 'Already have an account? Login',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }
+          }
+
+          class WelcomeScreen extends StatelessWidget {
+            const WelcomeScreen({super.key});
+
+            @override
+            Widget build(BuildContext context) {
+              final user = Supabase.instance.client.auth.currentUser;
+
+              return Scaffold(
+                appBar: AppBar(
+                  title: const Text('VIBEXA'),
+                  actions: [
+                    IconButton(
+                      onPressed: () async {
+                        await Supabase.instance.client.auth.signOut();
+                      },
+                      icon: const Icon(Icons.logout),
+                    ),
+                  ],
+                ),
                 body: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      const Icon(
+                        Icons.check_circle,
+                        color: Colors.greenAccent,
+                        size: 75,
+                      ),
+                      const SizedBox(height: 20),
                       const Text(
-                        'VIBEXA',
+                        'Welcome to VIBEXA!',
                         style: TextStyle(
-                          fontSize: 42,
+                          fontSize: 26,
                           fontWeight: FontWeight.bold,
-                          color: Colors.purpleAccent,
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      const Text('Connect the World'),
-                      const SizedBox(height: 25),
-                      Text(
-                        const String.fromEnvironment('SUPABASE_URL').isNotEmpty
-                            ? 'Supabase configured'
-                            : 'Supabase not configured',
-                        style: const TextStyle(color: Colors.greenAccent),
-                      ),
+                      const SizedBox(height: 10),
+                      Text(user?.email ?? ''),
+                      const SizedBox(height: 20),
+                      const Text('Your account is connected.'),
                     ],
                   ),
                 ),

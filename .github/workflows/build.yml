@@ -21,22 +21,20 @@ jobs:
           channel: stable
 
       - name: Create Flutter Project
-        run: |
-          flutter create vibexa_build
-          cd vibexa_build
+        run: flutter create vibexa_build
 
-      - name: Build VIBEXA App
+      - name: Write VIBEXA App
         run: |
           cd vibexa_build
           cat > lib/main.dart <<'EOF'
           import 'package:flutter/material.dart';
 
-          void main() {
-            runApp(const VibexaApp());
-          }
+          void main() => runApp(const VibexaApp());
 
           const purple = Color(0xFF8B5CF6);
+          const pink = Color(0xFFEC4899);
           const dark = Color(0xFF100D1F);
+          const panel = Color(0xFF211B32);
 
           class VibexaApp extends StatelessWidget {
             const VibexaApp({super.key});
@@ -45,95 +43,43 @@ jobs:
             Widget build(BuildContext context) {
               return MaterialApp(
                 debugShowCheckedModeBanner: false,
-                theme: ThemeData.dark().copyWith(
+                theme: ThemeData(
+                  brightness: Brightness.dark,
                   scaffoldBackgroundColor: dark,
                   colorScheme: ColorScheme.fromSeed(
                     seedColor: purple,
                     brightness: Brightness.dark,
                   ),
                 ),
-                home: const LoginScreen(),
+                home: const LoginPage(),
               );
             }
           }
 
-          class LoginScreen extends StatefulWidget {
-            const LoginScreen({super.key});
+          class LoginPage extends StatefulWidget {
+            const LoginPage({super.key});
 
             @override
-            State<LoginScreen> createState() => _LoginScreenState();
+            State<LoginPage> createState() => _LoginPageState();
           }
 
-          class _LoginScreenState extends State<LoginScreen> {
+          class _LoginPageState extends State<LoginPage> {
             final phone = TextEditingController();
-            final name = TextEditingController();
-            final age = TextEditingController();
 
-            bool signup = false;
-            String gender = 'Male';
-
-            Widget field(
-              String label,
-              TextEditingController controller,
-              IconData icon, {
-              TextInputType keyboard = TextInputType.text,
-            }) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: TextField(
-                  controller: controller,
-                  keyboardType: keyboard,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    labelText: label,
-                    prefixIcon: Icon(icon, color: purple),
-                    filled: true,
-                    fillColor: const Color(0xFF211B32),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-              );
-            }
-
-            void next() {
-              if (phone.text.trim().length < 10) {
+            void login() {
+              if (phone.text.length < 10) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Enter your mobile number')),
+                  const SnackBar(content: Text('Enter mobile number')),
                 );
                 return;
               }
 
-              if (!signup) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Demo OTP: 123456'),
-                  ),
-                );
-
-                setState(() => signup = true);
-              } else {
-                if (name.text.trim().isEmpty ||
-                    age.text.trim().isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Complete your profile'),
-                    ),
-                  );
-                  return;
-                }
-
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => HomeScreen(
-                      username: name.text,
-                    ),
-                  ),
-                );
-              }
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ProfilePage(),
+                ),
+              );
             }
 
             @override
@@ -145,159 +91,33 @@ jobs:
                     child: Column(
                       children: [
                         const SizedBox(height: 50),
-
-                        Container(
-                          height: 100,
-                          width: 100,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [
-                                purple,
-                                Color(0xFFEC4899),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: const Icon(
-                            Icons.mic,
-                            size: 55,
-                            color: Colors.white,
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-
+                        logo(),
+                        const SizedBox(height: 35),
                         const Text(
-                          'VIBEXA',
+                          'Welcome to VIBEXA',
                           style: TextStyle(
-                            fontSize: 36,
+                            fontSize: 26,
                             fontWeight: FontWeight.bold,
-                            letterSpacing: 5,
                           ),
                         ),
-
+                        const SizedBox(height: 10),
                         const Text(
                           'Connect • Talk • Party',
-                          style: TextStyle(
-                            color: Colors.white54,
-                            fontSize: 16,
-                          ),
+                          style: TextStyle(color: Colors.white60),
                         ),
-
-                        const SizedBox(height: 45),
-
-                        Text(
-                          signup ? 'Create Your Profile' : 'Welcome to VIBEXA',
-                          style: const TextStyle(
-                            fontSize: 25,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-
-                        const SizedBox(height: 10),
-
-                        Text(
-                          signup
-                              ? 'Tell us about yourself'
-                              : 'Enter your mobile number to continue',
-                          style: const TextStyle(
-                            color: Colors.white60,
-                          ),
-                        ),
-
-                        const SizedBox(height: 30),
-
+                        const SizedBox(height: 40),
                         field(
                           'Mobile Number',
                           phone,
                           Icons.phone_android,
                           keyboard: TextInputType.phone,
                         ),
-
-                        if (signup) ...[
-                          field(
-                            'Your Name',
-                            name,
-                            Icons.person,
-                          ),
-
-                          field(
-                            'Age',
-                            age,
-                            Icons.cake,
-                            keyboard: TextInputType.number,
-                          ),
-
-                          const SizedBox(height: 10),
-
-                          const Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text('Gender'),
-                          ),
-
-                          const SizedBox(height: 10),
-
-                          Row(
-                            children: [
-                              Expanded(
-                                child: RadioListTile<String>(
-                                  value: 'Male',
-                                  groupValue: gender,
-                                  onChanged: (v) {
-                                    setState(() => gender = v!);
-                                  },
-                                  title: const Text('Male'),
-                                  activeColor: purple,
-                                ),
-                              ),
-                              Expanded(
-                                child: RadioListTile<String>(
-                                  value: 'Female',
-                                  groupValue: gender,
-                                  onChanged: (v) {
-                                    setState(() => gender = v!);
-                                  },
-                                  title: const Text('Female'),
-                                  activeColor: purple,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-
+                        const SizedBox(height: 20),
+                        button('CONTINUE', login),
                         const SizedBox(height: 25),
-
-                        SizedBox(
-                          width: double.infinity,
-                          height: 55,
-                          child: ElevatedButton(
-                            onPressed: next,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: purple,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            child: Text(
-                              signup ? 'CREATE ACCOUNT' : 'CONTINUE',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 25),
-
                         const Text(
-                          'By continuing, you agree to our Terms & Privacy Policy',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white38,
-                          ),
+                          'Demo version - OTP will be added later',
+                          style: TextStyle(color: Colors.white38),
                         ),
                       ],
                     ),
@@ -307,13 +127,98 @@ jobs:
             }
           }
 
-          class HomeScreen extends StatelessWidget {
+          class ProfilePage extends StatefulWidget {
+            const ProfilePage({super.key});
+
+            @override
+            State<ProfilePage> createState() => _ProfilePageState();
+          }
+
+          class _ProfilePageState extends State<ProfilePage> {
+            final name = TextEditingController();
+            final age = TextEditingController();
+            String gender = 'Male';
+
+            void create() {
+              if (name.text.isEmpty || age.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Complete your profile')),
+                );
+                return;
+              }
+
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => MainApp(username: name.text),
+                ),
+              );
+            }
+
+            @override
+            Widget build(BuildContext context) {
+              return Scaffold(
+                appBar: AppBar(title: const Text('Create Profile')),
+                body: ListView(
+                  padding: const EdgeInsets.all(24),
+                  children: [
+                    const SizedBox(height: 20),
+                    const Center(
+                      child: CircleAvatar(
+                        radius: 55,
+                        backgroundColor: purple,
+                        child: Icon(Icons.person, size: 60),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    field('Your Name', name, Icons.person),
+                    field(
+                      'Age',
+                      age,
+                      Icons.cake,
+                      keyboard: TextInputType.number,
+                    ),
+                    const SizedBox(height: 15),
+                    const Text('Gender'),
+                    DropdownButtonFormField<String>(
+                      value: gender,
+                      items: ['Male', 'Female'].map((v) {
+                        return DropdownMenuItem(
+                          value: v,
+                          child: Text(v),
+                        );
+                      }).toList(),
+                      onChanged: (v) {
+                        setState(() => gender = v!);
+                      },
+                    ),
+                    const SizedBox(height: 30),
+                    button('CREATE ACCOUNT', create),
+                  ],
+                ),
+              );
+            }
+          }
+
+          class MainApp extends StatefulWidget {
             final String username;
 
-            const HomeScreen({
-              super.key,
-              required this.username,
-            });
+            const MainApp({super.key, required this.username});
+
+            @override
+            State<MainApp> createState() => _MainAppState();
+          }
+
+          class _MainAppState extends State<MainApp> {
+            int selected = 0;
+
+            final pages = [
+              'Home',
+              'Discover',
+              'Party',
+              'Messages',
+              'Profile',
+            ];
 
             @override
             Widget build(BuildContext context) {
@@ -327,95 +232,32 @@ jobs:
                       letterSpacing: 3,
                     ),
                   ),
-                  actions: const [
-                    Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Icon(Icons.monetization_on, color: Colors.amber),
+                  actions: [
+                    IconButton(
+                      icon: const Icon(
+                        Icons.monetization_on,
+                        color: Colors.amber,
+                      ),
+                      onPressed: () => open('Wallet'),
                     ),
                   ],
                 ),
-                body: ListView(
-                  padding: const EdgeInsets.all(20),
-                  children: [
-                    Text(
-                      'Welcome, $username 👋',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    const SizedBox(height: 25),
-
-                    const Text(
-                      'Explore VIBEXA',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: [
-                        category('🎙️', 'Voice'),
-                        category('🎵', 'Music'),
-                        category('💬', 'Chat'),
-                        category('🎮', 'Games'),
-                      ],
-                    ),
-
-                    const SizedBox(height: 35),
-
-                    const Text(
-                      'Trending Rooms',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    const SizedBox(height: 15),
-
-                    room('🎤', 'Friends Party', '125 people'),
-                    room('🎵', 'Music Lounge', '89 people'),
-                    room('💜', 'Chill Zone', '64 people'),
-
-                    const SizedBox(height: 30),
-
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [purple, Color(0xFFEC4899)],
-                        ),
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: const Column(
-                        children: [
-                          Icon(Icons.add_circle, size: 45),
-                          SizedBox(height: 12),
-                          Text(
-                            'Create Your Party',
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text('Start your own voice room'),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                body: selected == 0
+                    ? home()
+                    : selected == 1
+                        ? discover()
+                        : selected == 2
+                            ? party()
+                            : selected == 3
+                                ? messages()
+                                : profile(),
                 bottomNavigationBar: BottomNavigationBar(
-                  backgroundColor: const Color(0xFF211B32),
+                  currentIndex: selected,
+                  type: BottomNavigationBarType.fixed,
+                  backgroundColor: panel,
                   selectedItemColor: purple,
                   unselectedItemColor: Colors.white54,
-                  type: BottomNavigationBarType.fixed,
+                  onTap: (i) => setState(() => selected = i),
                   items: const [
                     BottomNavigationBarItem(
                       icon: Icon(Icons.home),
@@ -442,63 +284,613 @@ jobs:
               );
             }
 
-            Widget category(String emoji, String title) {
-              return Container(
-                width: 145,
+            Widget home() {
+              return ListView(
                 padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF211B32),
-                  borderRadius: BorderRadius.circular(18),
+                children: [
+                  Text(
+                    'Welcome, ${widget.username} 👋',
+                    style: const TextStyle(
+                      fontSize: 25,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Discover new friends and parties',
+                    style: TextStyle(color: Colors.white60),
+                  ),
+                  const SizedBox(height: 25),
+                  section('Categories'),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      category('🎙️', 'Voice'),
+                      category('🎵', 'Music'),
+                      category('💬', 'Chat'),
+                      category('🎮', 'Games'),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+                  section('Trending Rooms'),
+                  room('🎤', 'Friends Party', '125 people'),
+                  room('🎵', 'Music Lounge', '89 people'),
+                  room('💜', 'Chill Zone', '64 people'),
+                  room('🔥', 'Night Party', '42 people'),
+                  const SizedBox(height: 25),
+                  gradientCard(
+                    '🎉 Create Your Party',
+                    'Start your own voice room',
+                    () => open('Create Room'),
+                  ),
+                  const SizedBox(height: 25),
+                  section('Features'),
+                  feature('💎', 'Wallet', 'Coins and balance', 'Wallet'),
+                  feature('🎁', 'Gift Shop', 'Send virtual gifts', 'Gifts'),
+                  feature('⚔️', 'PK Battle', 'Battle with friends', 'PK Battle'),
+                  feature('👑', 'VIP Membership', 'Unlock VIP features', 'VIP'),
+                ],
+              );
+            }
+
+            Widget discover() {
+              return ListView(
+                padding: const EdgeInsets.all(18),
+                children: [
+                  section('Discover'),
+                  field(
+                    'Search rooms or users',
+                    TextEditingController(),
+                    Icons.search,
+                  ),
+                  room('🌍', 'Global Party', '245 people'),
+                  room('🎶', 'Music Lovers', '102 people'),
+                  room('💬', 'Friendship Room', '87 people'),
+                  room('🎮', 'Gaming Zone', '56 people'),
+                  section('Popular'),
+                  room('🔥', 'Trending Pakistan', '190 people'),
+                  room('🌙', 'Late Night Lounge', '78 people'),
+                ],
+              );
+            }
+
+            Widget party() {
+              return ListView(
+                padding: const EdgeInsets.all(18),
+                children: [
+                  section('Voice Party'),
+                  gradientCard(
+                    '🎙️ Create Room',
+                    'Create your own voice party',
+                    () => open('Create Room'),
+                  ),
+                  const SizedBox(height: 20),
+                  room('🎤', 'Friends Party', '125 people'),
+                  room('🎵', 'Music Lounge', '89 people'),
+                  room('💜', 'Chill Zone', '64 people'),
+                ],
+              );
+            }
+
+            Widget messages() {
+              return ListView(
+                padding: const EdgeInsets.all(18),
+                children: [
+                  section('Messages'),
+                  room('👤', 'Ali', 'Hey! How are you?'),
+                  room('👤', 'Ahmed', 'Welcome to VIBEXA'),
+                  room('👤', 'Sara', 'Hello 👋'),
+                  room('👤', 'Friends Group', 'Party tonight?'),
+                ],
+              );
+            }
+
+            Widget profile() {
+              return ListView(
+                padding: const EdgeInsets.all(18),
+                children: [
+                  const SizedBox(height: 20),
+                  const Center(
+                    child: CircleAvatar(
+                      radius: 55,
+                      backgroundColor: purple,
+                      child: Icon(Icons.person, size: 60),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  Center(
+                    child: Text(
+                      widget.username,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const Center(
+                    child: Text(
+                      'VIBEXA ID: VX10001',
+                      style: TextStyle(color: Colors.white54),
+                    ),
+                  ),
+                  const SizedBox(height: 25),
+                  feature('👤', 'Edit Profile', 'Change profile details', 'Edit Profile'),
+                  feature('💎', 'Wallet', 'Coins balance', 'Wallet'),
+                  feature('🎁', 'Gifts', 'My gifts', 'Gifts'),
+                  feature('👑', 'VIP', 'Membership', 'VIP'),
+                  feature('⚙️', 'Settings', 'App settings', 'Settings'),
+                  feature('🛡️', 'Help & Support', 'Contact us', 'Help'),
+                  const SizedBox(height: 20),
+                  button('LOGOUT', () {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const LoginPage(),
+                      ),
+                      (route) => false,
+                    );
+                  }),
+                ],
+              );
+            }
+
+            void open(String title) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => FeaturePage(title: title),
                 ),
-                child: Column(
-                  children: [
-                    Text(emoji, style: const TextStyle(fontSize: 30)),
-                    const SizedBox(height: 8),
-                    Text(title),
-                  ],
+              );
+            }
+
+            Widget category(String emoji, String title) {
+              return InkWell(
+                onTap: () => open(title),
+                child: Container(
+                  width: 150,
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: panel,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(emoji, style: const TextStyle(fontSize: 32)),
+                      const SizedBox(height: 8),
+                      Text(title),
+                    ],
+                  ),
                 ),
               );
             }
 
             Widget room(String emoji, String title, String people) {
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF211B32),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Row(
-                  children: [
-                    Text(emoji, style: const TextStyle(fontSize: 30)),
-                    const SizedBox(width: 15),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
+              return InkWell(
+                onTap: () => open(title),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: panel,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(emoji, style: const TextStyle(fontSize: 32)),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          Text(
-                            people,
-                            style: const TextStyle(
-                              color: Colors.white54,
+                            Text(
+                              people,
+                              style: const TextStyle(color: Colors.white54),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                      const Icon(Icons.arrow_forward_ios, color: purple),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            Widget feature(
+              String emoji,
+              String title,
+              String subtitle,
+              String destination,
+            ) {
+              return InkWell(
+                onTap: () => open(destination),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: panel,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(emoji, style: const TextStyle(fontSize: 28)),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              subtitle,
+                              style: const TextStyle(color: Colors.white54),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.arrow_forward_ios, size: 16),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            Widget gradientCard(
+              String title,
+              String subtitle,
+              VoidCallback action,
+            ) {
+              return InkWell(
+                onTap: action,
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [purple, pink],
                     ),
-                    const Icon(Icons.arrow_forward_ios, color: purple),
-                  ],
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(subtitle),
+                      const SizedBox(height: 15),
+                      const Icon(Icons.arrow_forward, size: 30),
+                    ],
+                  ),
                 ),
               );
             }
           }
+
+          class FeaturePage extends StatefulWidget {
+            final String title;
+
+            const FeaturePage({super.key, required this.title});
+
+            @override
+            State<FeaturePage> createState() => _FeaturePageState();
+          }
+
+          class _FeaturePageState extends State<FeaturePage> {
+            final input = TextEditingController();
+            int coins = 1000;
+
+            @override
+            Widget build(BuildContext context) {
+              return Scaffold(
+                appBar: AppBar(title: Text(widget.title)),
+                body: ListView(
+                  padding: const EdgeInsets.all(20),
+                  children: [
+                    const SizedBox(height: 15),
+                    Center(
+                      child: Icon(
+                        iconFor(widget.title),
+                        size: 70,
+                        color: purple,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Center(
+                      child: Text(
+                        widget.title,
+                        style: const TextStyle(
+                          fontSize: 25,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Center(
+                      child: Text(
+                        'VIBEXA',
+                        style: TextStyle(color: Colors.white54),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+
+                    if (widget.title == 'Wallet') ...[
+                      gradientCard(
+                        '💰 $coins Coins',
+                        'Your demo coin balance',
+                        () {},
+                      ),
+                      const SizedBox(height: 20),
+                      button('Buy Coins', () => message('Coming Soon')),
+                      button('Transaction History', () => message('Coming Soon')),
+                    ],
+
+                    if (widget.title == 'Gifts') ...[
+                      section('Gift Shop'),
+                      gift('🌹', 'Rose', 10),
+                      gift('❤️', 'Heart', 50),
+                      gift('💎', 'Diamond', 100),
+                      gift('👑', 'Crown', 500),
+                      gift('🚀', 'Rocket', 1000),
+                    ],
+
+                    if (widget.title == 'PK Battle') ...[
+                      gradientCard('⚔️ VS ⚔️', 'Start PK Battle', () {}),
+                      const SizedBox(height: 20),
+                      const Text('Player 1'),
+                      const SizedBox(height: 10),
+                      const LinearProgressIndicator(value: 0.7),
+                      const SizedBox(height: 25),
+                      const Text('Player 2'),
+                      const SizedBox(height: 10),
+                      const LinearProgressIndicator(value: 0.4),
+                      button('START BATTLE', () => message('PK Demo')),
+                    ],
+
+                    if (widget.title == 'Create Room') ...[
+                      field('Room Name', input, Icons.meeting_room),
+                      button('CREATE ROOM', () => message('Room Demo Created')),
+                    ],
+
+                    if (widget.title == 'VIP') ...[
+                      section('VIP Membership'),
+                      featureTile('👑', 'VIP Level 1'),
+                      featureTile('💎', 'VIP Level 2'),
+                      featureTile('🌟', 'VIP Level 3'),
+                      button('BECOME VIP', () => message('VIP Coming Soon')),
+                    ],
+
+                    if (widget.title == 'Games') ...[
+                      featureTile('🎲', 'Dice Game'),
+                      featureTile('🎯', 'Lucky Game'),
+                      featureTile('🃏', 'Card Game'),
+                      button('PLAY', () => message('Game Demo')),
+                    ],
+
+                    if (widget.title == 'Messages') ...[
+                      field('Write Message', input, Icons.message),
+                      button('SEND', () => message('Demo Message')),
+                    ],
+
+                    if (widget.title == 'Settings') ...[
+                      featureTile('🌐', 'Language'),
+                      featureTile('🔔', 'Notifications'),
+                      featureTile('🔒', 'Privacy'),
+                      featureTile('🛡️', 'Security'),
+                      featureTile('ℹ️', 'About VIBEXA'),
+                    ],
+
+                    if (widget.title == 'Edit Profile') ...[
+                      field('Name', input, Icons.person),
+                      button('SAVE', () => message('Profile Saved')),
+                    ],
+
+                    if (widget.title == 'Help') ...[
+                      featureTile('📞', 'Contact Support'),
+                      featureTile('❓', 'Frequently Asked Questions'),
+                      featureTile('📄', 'Terms & Conditions'),
+                    ],
+
+                    if (![
+                      'Wallet',
+                      'Gifts',
+                      'PK Battle',
+                      'Create Room',
+                      'VIP',
+                      'Games',
+                      'Messages',
+                      'Settings',
+                      'Edit Profile',
+                      'Help',
+                    ].contains(widget.title)) ...[
+                      const SizedBox(height: 25),
+                      const Text(
+                        'This feature is currently in demo mode.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white54),
+                      ),
+                      button('OPEN', () => message('Coming Soon')),
+                    ],
+                  ],
+                ),
+              );
+            }
+
+            Widget gift(String emoji, String name, int price) {
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: panel,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    Text(emoji, style: const TextStyle(fontSize: 32)),
+                    const SizedBox(width: 15),
+                    Expanded(child: Text(name)),
+                    Text('$price Coins'),
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (coins >= price) {
+                          setState(() => coins -= price);
+                          message('$name sent!');
+                        } else {
+                          message('Not enough coins');
+                        }
+                      },
+                      child: const Text('Send'),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            Widget featureTile(String emoji, String name) {
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: panel,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    Text(emoji, style: const TextStyle(fontSize: 28)),
+                    const SizedBox(width: 15),
+                    Text(name),
+                  ],
+                ),
+              );
+            }
+
+            void message(String text) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(text)),
+              );
+            }
+          }
+
+          Widget logo() {
+            return Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [purple, pink],
+                ),
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: const Icon(Icons.mic, size: 55),
+            );
+          }
+
+          Widget section(String title) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 15),
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            );
+          }
+
+          Widget field(
+            String label,
+            TextEditingController controller,
+            IconData icon, {
+            TextInputType keyboard = TextInputType.text,
+          }) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 15),
+              child: TextField(
+                controller: controller,
+                keyboardType: keyboard,
+                decoration: InputDecoration(
+                  labelText: label,
+                  prefixIcon: Icon(icon, color: purple),
+                  filled: true,
+                  fillColor: panel,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          Widget button(String title, VoidCallback action) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: SizedBox(
+                width: double.infinity,
+                height: 55,
+                child: ElevatedButton(
+                  onPressed: action,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: purple,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }
+
+          IconData iconFor(String title) {
+            switch (title) {
+              case 'Wallet':
+                return Icons.account_balance_wallet;
+              case 'Gifts':
+                return Icons.card_giftcard;
+              case 'PK Battle':
+                return Icons.sports_esports;
+              case 'VIP':
+                return Icons.workspace_premium;
+              case 'Games':
+                return Icons.games;
+              case 'Create Room':
+                return Icons.mic;
+              case 'Settings':
+                return Icons.settings;
+              case 'Messages':
+                return Icons.message;
+              default:
+                return Icons.apps;
+            }
+          }
           EOF
 
+      - name: Build APK
+        run: |
+          cd vibexa_build
           flutter pub get
           flutter build apk --release
 

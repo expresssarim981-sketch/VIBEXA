@@ -1,6 +1,6 @@
 name: Build VIBEXA APK
 
-on:
+'on':
   workflow_dispatch:
   push:
     branches:
@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Flutter
@@ -20,10 +20,9 @@ jobs:
           channel: stable
 
       - name: Create Flutter Project
-        run: |
-          flutter create --platforms=android vibexa_build
+        run: flutter create --platforms=android vibexa_build
 
-      - name: Replace Main App
+      - name: Create VIBEXA App
         run: |
           cat > vibexa_build/lib/main.dart <<'EOF'
 import 'package:flutter/material.dart';
@@ -33,10 +32,9 @@ void main() {
 }
 
 const purple = Color(0xFF8B5CF6);
+const pink = Color(0xFFFF4DA6);
 const dark = Color(0xFF100C1D);
 const card = Color(0xFF211934);
-const pink = Color(0xFFFF4DA6);
-const gold = Color(0xFFFFC857);
 
 class VibexaApp extends StatelessWidget {
   const VibexaApp({super.key});
@@ -44,23 +42,19 @@ class VibexaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'VIBEXA',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
+      title: 'VIBEXA',
+      theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: dark,
-        fontFamily: 'Roboto',
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: purple,
-          brightness: Brightness.dark,
+        colorScheme: const ColorScheme.dark(
+          primary: purple,
+          secondary: pink,
         ),
       ),
       home: const LoginPage(),
     );
   }
 }
-
-// LOGIN / SIGNUP
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -72,25 +66,17 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   bool signup = false;
 
-  final phoneController = TextEditingController();
-  final nameController = TextEditingController();
-
-  @override
-  void dispose() {
-    phoneController.dispose();
-    nameController.dispose();
-    super.dispose();
-  }
+  final phone = TextEditingController();
+  final name = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        width: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFF28144A),
+              Color(0xFF35165F),
               dark,
               Color(0xFF120D20),
             ],
@@ -103,31 +89,25 @@ class _LoginPageState extends State<LoginPage> {
             padding: const EdgeInsets.all(25),
             child: Column(
               children: [
-                const SizedBox(height: 50),
+                const SizedBox(height: 45),
 
                 Container(
-                  height: 110,
-                  width: 110,
+                  height: 100,
+                  width: 100,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [purple, pink],
                     ),
                     borderRadius: BorderRadius.circular(30),
-                    boxShadow: [
-                      BoxShadow(
-                        color: purple.withOpacity(0.4),
-                        blurRadius: 30,
-                      ),
-                    ],
                   ),
                   child: const Icon(
                     Icons.mic,
-                    size: 60,
+                    size: 55,
                     color: Colors.white,
                   ),
                 ),
 
-                const SizedBox(height: 25),
+                const SizedBox(height: 20),
 
                 const Text(
                   'VIBEXA',
@@ -138,17 +118,12 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
 
-                const SizedBox(height: 8),
-
                 const Text(
-                  'Connect. Party. Enjoy.',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 16,
-                  ),
+                  'Connect • Party • Enjoy',
+                  style: TextStyle(color: Colors.white70),
                 ),
 
-                const SizedBox(height: 50),
+                const SizedBox(height: 45),
 
                 Text(
                   signup ? 'Create Account' : 'Welcome Back',
@@ -163,27 +138,18 @@ class _LoginPageState extends State<LoginPage> {
                 Text(
                   signup
                       ? 'Join the VIBEXA community'
-                      : 'Login to your VIBEXA account',
+                      : 'Login to your account',
                   style: const TextStyle(color: Colors.white60),
                 ),
 
                 const SizedBox(height: 30),
 
                 if (signup)
-                  inputField(
-                    controller: nameController,
-                    hint: 'Your Name',
-                    icon: Icons.person_outline,
-                  ),
+                  input(name, 'Your Name', Icons.person),
 
                 const SizedBox(height: 15),
 
-                inputField(
-                  controller: phoneController,
-                  hint: 'Mobile Number',
-                  icon: Icons.phone_android,
-                  keyboard: TextInputType.phone,
-                ),
+                input(phone, 'Mobile Number', Icons.phone_android),
 
                 const SizedBox(height: 25),
 
@@ -191,6 +157,10 @@ class _LoginPageState extends State<LoginPage> {
                   width: double.infinity,
                   height: 55,
                   child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: purple,
+                      foregroundColor: Colors.white,
+                    ),
                     onPressed: () {
                       Navigator.pushReplacement(
                         context,
@@ -199,24 +169,15 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       );
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: purple,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
                     child: Text(
                       signup ? 'CREATE ACCOUNT' : 'LOGIN',
                       style: const TextStyle(
-                        fontSize: 16,
                         fontWeight: FontWeight.bold,
+                        fontSize: 16,
                       ),
                     ),
                   ),
                 ),
-
-                const SizedBox(height: 25),
 
                 TextButton(
                   onPressed: () {
@@ -227,19 +188,18 @@ class _LoginPageState extends State<LoginPage> {
                   child: Text(
                     signup
                         ? 'Already have an account? Login'
-                        : 'New to VIBEXA? Create Account',
+                        : 'Create New Account',
                     style: const TextStyle(color: purple),
                   ),
                 ),
 
-                const SizedBox(height: 30),
+                const SizedBox(height: 25),
 
                 const Text(
-                  'By continuing, you agree to our Terms & Privacy Policy',
-                  textAlign: TextAlign.center,
+                  'VIBEXA • YOUR SOCIAL PARTY WORLD',
                   style: TextStyle(
-                    fontSize: 11,
                     color: Colors.white38,
+                    fontSize: 11,
                   ),
                 ),
               ],
@@ -250,19 +210,16 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget inputField({
-    required TextEditingController controller,
-    required String hint,
-    required IconData icon,
-    TextInputType keyboard = TextInputType.text,
-  }) {
+  Widget input(
+    TextEditingController controller,
+    String hint,
+    IconData icon,
+  ) {
     return TextField(
       controller: controller,
-      keyboardType: keyboard,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white54),
         prefixIcon: Icon(icon, color: purple),
         filled: true,
         fillColor: card,
@@ -275,8 +232,6 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
-// MAIN APP
-
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
 
@@ -285,7 +240,7 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  int selectedIndex = 0;
+  int index = 0;
 
   final pages = const [
     HomePage(),
@@ -298,43 +253,35 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: selectedIndex,
-        children: pages,
-      ),
+      body: pages[index],
       bottomNavigationBar: NavigationBar(
-        backgroundColor: const Color(0xFF1A1328),
+        backgroundColor: card,
+        selectedIndex: index,
         indicatorColor: purple.withOpacity(0.3),
-        selectedIndex: selectedIndex,
-        onDestinationSelected: (index) {
+        onDestinationSelected: (value) {
           setState(() {
-            selectedIndex = index;
+            index = value;
           });
         },
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
             label: 'Home',
           ),
           NavigationDestination(
             icon: Icon(Icons.explore_outlined),
-            selectedIcon: Icon(Icons.explore),
             label: 'Discover',
           ),
           NavigationDestination(
-            icon: Icon(Icons.mic_none),
-            selectedIcon: Icon(Icons.mic),
+            icon: Icon(Icons.mic),
             label: 'Party',
           ),
           NavigationDestination(
             icon: Icon(Icons.chat_bubble_outline),
-            selectedIcon: Icon(Icons.chat),
             label: 'Messages',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
             label: 'Profile',
           ),
         ],
@@ -342,8 +289,6 @@ class _MainPageState extends State<MainPage> {
     );
   }
 }
-
-// HOME
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -357,143 +302,105 @@ class HomePage extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'VIBEXA',
-                      style: TextStyle(
-                        fontSize: 27,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 3,
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'VIBEXA',
+                        style: TextStyle(
+                          fontSize: 27,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 3,
+                        ),
                       ),
-                    ),
-                    Text(
-                      'Welcome to the party',
-                      style: TextStyle(color: Colors.white60),
-                    ),
-                  ],
+                      Text(
+                        'Welcome to the party',
+                        style: TextStyle(color: Colors.white60),
+                      ),
+                    ],
+                  ),
                 ),
-                const Spacer(),
-                coinButton(context),
+                const Icon(
+                  Icons.monetization_on,
+                  color: Colors.amber,
+                ),
+                const Text(' 1000'),
                 const SizedBox(width: 10),
-                CircleAvatar(
-                  backgroundColor: card,
-                  child: const Icon(Icons.notifications_none),
-                ),
+                const Icon(Icons.notifications_outlined),
               ],
             ),
 
             const SizedBox(height: 25),
 
             Container(
-              padding: const EdgeInsets.all(22),
+              padding: const EdgeInsets.all(25),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF7835D8), Color(0xFFED49A2)],
+                  colors: [purple, pink],
                 ),
                 borderRadius: BorderRadius.circular(25),
               ),
-              child: Column(
+              child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'YOUR WORLD',
+                  Text('YOUR WORLD'),
+                  SizedBox(height: 10),
+                  Text(
+                    'Meet New Friends\n& Have Fun!',
                     style: TextStyle(
-                      letterSpacing: 2,
+                      fontSize: 27,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Meet New Friends\n& Have Fun!',
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: purple,
-                    ),
-                    child: const Text('Explore Rooms'),
-                  ),
+                  SizedBox(height: 10),
+                  Text('Explore voice rooms and make friends'),
                 ],
               ),
             ),
 
             const SizedBox(height: 25),
 
-            sectionTitle('Categories'),
+            title('Categories'),
 
             const SizedBox(height: 15),
 
             Row(
               children: [
-                categoryItem(Icons.mic, 'Voice'),
-                categoryItem(Icons.music_note, 'Music'),
-                categoryItem(Icons.chat, 'Chat'),
-                categoryItem(Icons.games, 'Games'),
+                category(Icons.mic, 'Voice'),
+                category(Icons.music_note, 'Music'),
+                category(Icons.chat, 'Chat'),
+                category(Icons.sports_esports, 'Games'),
               ],
-            ),
-
-            const SizedBox(height: 28),
-
-            sectionTitle('Trending Rooms'),
-
-            const SizedBox(height: 15),
-
-            roomCard(
-              '🎤',
-              'Friends Forever',
-              'Talking • 8 People',
-              purple,
-            ),
-
-            roomCard(
-              '🎵',
-              'Music Lovers',
-              'Music • 12 People',
-              pink,
-            ),
-
-            roomCard(
-              '💖',
-              'Love & Friendship',
-              'Chat • 6 People',
-              const Color(0xFFEC4899),
-            ),
-
-            roomCard(
-              '🎮',
-              'Gaming Zone',
-              'Games • 15 People',
-              const Color(0xFF3B82F6),
             ),
 
             const SizedBox(height: 25),
 
-            sectionTitle('Create Your Party'),
+            title('Trending Rooms'),
 
             const SizedBox(height: 15),
 
-            featureCard(
+            room('🎤', 'Friends Forever', 'Voice • 8 People'),
+            room('🎵', 'Music Lovers', 'Music • 12 People'),
+            room('❤️', 'Love & Friendship', 'Chat • 6 People'),
+            room('🎮', 'Gaming Zone', 'Games • 15 People'),
+
+            const SizedBox(height: 25),
+
+            title('Create Your Party'),
+
+            const SizedBox(height: 15),
+
+            feature(
               Icons.add_circle,
               'Create Voice Room',
               'Start your own party',
-              purple,
-              () {},
             ),
 
-            featureCard(
+            feature(
               Icons.sports_esports,
               'Start PK Battle',
               'Challenge your friends',
-              pink,
-              () {},
             ),
           ],
         ),
@@ -502,8 +409,6 @@ class HomePage extends StatelessWidget {
   }
 }
 
-// DISCOVER
-
 class DiscoverPage extends StatelessWidget {
   const DiscoverPage({super.key});
 
@@ -511,10 +416,7 @@ class DiscoverPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Discover',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: const Text('Discover'),
         backgroundColor: dark,
       ),
       body: ListView(
@@ -522,7 +424,7 @@ class DiscoverPage extends StatelessWidget {
         children: [
           TextField(
             decoration: InputDecoration(
-              hintText: 'Search rooms or people...',
+              hintText: 'Search rooms or people',
               prefixIcon: const Icon(Icons.search),
               filled: true,
               fillColor: card,
@@ -532,35 +434,18 @@ class DiscoverPage extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(height: 25),
-
-          sectionTitle('Popular Rooms'),
-
+          title('Popular Rooms'),
           const SizedBox(height: 15),
-
-          roomCard('🎤', 'Pakistan Voice Club', 'Voice • 20 People', purple),
-          roomCard('🎶', 'Music Night', 'Music • 18 People', pink),
-          roomCard('❤️', 'Friendship Lounge', 'Chat • 10 People', Colors.red),
-          roomCard('🎮', 'Game Masters', 'Games • 14 People', Colors.blue),
-
-          const SizedBox(height: 25),
-
-          sectionTitle('Popular Users'),
-
-          const SizedBox(height: 15),
-
-          userCard('Ali', '🧑', 'Online'),
-          userCard('Sara', '👩', 'Online'),
-          userCard('Ahmed', '👨', 'Online'),
-          userCard('Ayesha', '👩', 'Online'),
+          room('🎤', 'Pakistan Voice Club', 'Voice • 20 People'),
+          room('🎵', 'Music Night', 'Music • 18 People'),
+          room('❤️', 'Friendship Lounge', 'Chat • 10 People'),
+          room('🎮', 'Game Masters', 'Games • 14 People'),
         ],
       ),
     );
   }
 }
-
-// PARTY
 
 class PartyPage extends StatelessWidget {
   const PartyPage({super.key});
@@ -575,41 +460,15 @@ class PartyPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(18),
         children: [
-          featureCard(
-            Icons.mic,
-            'Create Voice Room',
-            'Start a new room',
-            purple,
-            () {},
-          ),
-          featureCard(
-            Icons.people,
-            'Join a Party',
-            'Meet people and talk',
-            pink,
-            () {},
-          ),
-          featureCard(
-            Icons.sports_esports,
-            'PK Battle',
-            'Battle with another room',
-            Colors.orange,
-            () {},
-          ),
-          featureCard(
-            Icons.games,
-            'Mini Games',
-            'Play games with friends',
-            Colors.blue,
-            () {},
-          ),
+          feature(Icons.mic, 'Create Voice Room', 'Start a new room'),
+          feature(Icons.people, 'Join a Party', 'Meet new people'),
+          feature(Icons.sports_esports, 'PK Battle', 'Battle with friends'),
+          feature(Icons.games, 'Mini Games', 'Play with friends'),
         ],
       ),
     );
   }
 }
-
-// MESSAGES
 
 class MessagesPage extends StatelessWidget {
   const MessagesPage({super.key});
@@ -621,19 +480,22 @@ class MessagesPage extends StatelessWidget {
         title: const Text('Messages'),
         backgroundColor: dark,
       ),
-      body: ListView(
-        children: [
-          messageCard('Sara', 'Hello! How are you?', '2 min ago', '👩'),
-          messageCard('Ali', 'Join my room 🎤', '5 min ago', '🧑'),
-          messageCard('Ahmed', 'Nice to meet you!', '10 min ago', '👨'),
-          messageCard('Ayesha', 'Good evening ❤️', '1 hour ago', '👩'),
-        ],
+      body: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.chat_bubble_outline, size: 70, color: purple),
+            SizedBox(height: 15),
+            Text(
+              'Your messages will appear here',
+              style: TextStyle(color: Colors.white60),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
-
-// PROFILE
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -644,26 +506,17 @@ class ProfilePage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('My Profile'),
         backgroundColor: dark,
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.settings),
-          ),
-        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           const SizedBox(height: 20),
-
           const CircleAvatar(
             radius: 55,
             backgroundColor: purple,
             child: Icon(Icons.person, size: 60),
           ),
-
           const SizedBox(height: 15),
-
           const Text(
             'VIBEXA USER',
             textAlign: TextAlign.center,
@@ -672,45 +525,37 @@ class ProfilePage extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-
           const SizedBox(height: 8),
-
           const Text(
             'ID: VX100001',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.white60),
           ),
-
           const SizedBox(height: 25),
-
           Row(
             children: [
-              statCard('Followers', '0'),
-              statCard('Following', '0'),
-              statCard('Friends', '0'),
+              stat('Followers', '0'),
+              stat('Following', '0'),
+              stat('Friends', '0'),
             ],
           ),
-
           const SizedBox(height: 25),
-
-          featureCard(Icons.account_circle, 'Edit Profile', 'Update your profile', purple, () {}),
-          featureCard(Icons.wallet, 'My Wallet', 'Manage your coins', gold, () {}),
-          featureCard(Icons.card_giftcard, 'My Gifts', 'View your gifts', pink, () {}),
-          featureCard(Icons.favorite, 'My Friends', 'Your friends list', Colors.red, () {}),
-          featureCard(Icons.history, 'History', 'Your activity', Colors.blue, () {}),
-          featureCard(Icons.settings, 'Settings', 'App settings', Colors.grey, () {}),
-          featureCard(Icons.logout, 'Logout', 'Sign out of account', Colors.red, () {}),
+          feature(Icons.edit, 'Edit Profile', 'Update your information'),
+          feature(Icons.account_balance_wallet, 'My Wallet', 'Manage coins'),
+          feature(Icons.card_giftcard, 'My Gifts', 'View gifts'),
+          feature(Icons.favorite, 'My Friends', 'Friends list'),
+          feature(Icons.history, 'History', 'Activity history'),
+          feature(Icons.settings, 'Settings', 'App settings'),
+          feature(Icons.logout, 'Logout', 'Sign out'),
         ],
       ),
     );
   }
 }
 
-// COMPONENTS
-
-Widget sectionTitle(String title) {
+Widget title(String text) {
   return Text(
-    title,
+    text,
     style: const TextStyle(
       fontSize: 20,
       fontWeight: FontWeight.bold,
@@ -718,28 +563,7 @@ Widget sectionTitle(String title) {
   );
 }
 
-Widget coinButton(BuildContext context) {
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-    decoration: BoxDecoration(
-      color: card,
-      borderRadius: BorderRadius.circular(30),
-    ),
-    child: const Row(
-      children: [
-        Icon(Icons.monetization_on, color: gold, size: 20),
-        SizedBox(width: 5),
-        Text(
-          '1000',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        Icon(Icons.add, color: purple, size: 18),
-      ],
-    ),
-  );
-}
-
-Widget categoryItem(IconData icon, String title) {
+Widget category(IconData icon, String text) {
   return Expanded(
     child: Column(
       children: [
@@ -750,144 +574,31 @@ Widget categoryItem(IconData icon, String title) {
             color: card,
             borderRadius: BorderRadius.circular(18),
           ),
-          child: Icon(icon, color: purple, size: 28),
+          child: Icon(icon, color: purple, size: 27),
         ),
         const SizedBox(height: 8),
-        Text(title, style: const TextStyle(fontSize: 12)),
+        Text(text, style: const TextStyle(fontSize: 12)),
       ],
     ),
   );
 }
 
-Widget roomCard(
-  String emoji,
-  String title,
-  String subtitle,
-  Color color,
-) {
+Widget room(String emoji, String name, String subtitle) {
   return Container(
     margin: const EdgeInsets.only(bottom: 12),
-    padding: const EdgeInsets.all(14),
+    padding: const EdgeInsets.all(15),
     decoration: BoxDecoration(
       color: card,
       borderRadius: BorderRadius.circular(18),
     ),
     child: Row(
       children: [
-        Container(
-          height: 55,
-          width: 55,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(15),
-          ),
-          child: Center(
-            child: Text(emoji, style: const TextStyle(fontSize: 26)),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  color: Colors.white60,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Icon(Icons.arrow_forward_ios, color: color, size: 17),
-      ],
-    ),
-  );
-}
-
-Widget featureCard(
-  IconData icon,
-  String title,
-  String subtitle,
-  Color color,
-  VoidCallback onTap,
-) {
-  return InkWell(
-    onTap: onTap,
-    borderRadius: BorderRadius.circular(18),
-    child: Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(17),
-      decoration: BoxDecoration(
-        color: card,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Row(
-        children: [
-          Container(
-            height: 48,
-            width: 48,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: color),
-          ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: Colors.white60,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Icon(Icons.arrow_forward_ios, size: 15),
-        ],
-      ),
-    ),
-  );
-}
-
-Widget userCard(String name, String emoji, String status) {
-  return Container(
-    margin: const EdgeInsets.only(bottom: 12),
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: card,
-      borderRadius: BorderRadius.circular(15),
-    ),
-    child: Row(
-      children: [
         CircleAvatar(
-          radius: 25,
+          radius: 27,
           backgroundColor: purple.withOpacity(0.2),
-          child: Text(emoji, style: const TextStyle(fontSize: 24)),
+          child: Text(emoji, style: const TextStyle(fontSize: 25)),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 13),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -896,35 +607,55 @@ Widget userCard(String name, String emoji, String status) {
                 name,
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              Text(status, style: const TextStyle(color: Colors.green)),
+              const SizedBox(height: 5),
+              Text(
+                subtitle,
+                style: const TextStyle(color: Colors.white60),
+              ),
             ],
           ),
         ),
-        const Icon(Icons.person_add, color: purple),
+        const Icon(Icons.arrow_forward_ios, color: purple, size: 16),
       ],
     ),
   );
 }
 
-Widget messageCard(
-  String name,
-  String message,
-  String time,
-  String emoji,
-) {
-  return ListTile(
-    contentPadding: const EdgeInsets.all(12),
-    leading: CircleAvatar(
-      backgroundColor: card,
-      child: Text(emoji, style: const TextStyle(fontSize: 24)),
+Widget feature(IconData icon, String name, String subtitle) {
+  return Container(
+    margin: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.all(17),
+    decoration: BoxDecoration(
+      color: card,
+      borderRadius: BorderRadius.circular(18),
     ),
-    title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-    subtitle: Text(message),
-    trailing: Text(time, style: const TextStyle(fontSize: 10)),
+    child: Row(
+      children: [
+        Icon(icon, color: purple, size: 30),
+        const SizedBox(width: 15),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                name,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                subtitle,
+                style: const TextStyle(color: Colors.white60),
+              ),
+            ],
+          ),
+        ),
+        const Icon(Icons.arrow_forward_ios, size: 15),
+      ],
+    ),
   );
 }
 
-Widget statCard(String title, String value) {
+Widget stat(String name, String value) {
   return Expanded(
     child: Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -944,10 +675,10 @@ Widget statCard(String title, String value) {
           ),
           const SizedBox(height: 5),
           Text(
-            title,
+            name,
             style: const TextStyle(
-              fontSize: 11,
               color: Colors.white60,
+              fontSize: 11,
             ),
           ),
         ],

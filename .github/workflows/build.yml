@@ -1,0 +1,278 @@
+name: Build VIBEXA APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Create Flutter Project Files
+        run: |
+          mkdir -p lib
+
+          cat > pubspec.yaml <<'EOF'
+          name: vibexa
+          description: VIBEXA Social Party App
+          publish_to: none
+          version: 1.0.0+1
+
+          environment:
+            sdk: '>=3.0.0 <4.0.0'
+
+          dependencies:
+            flutter:
+              sdk: flutter
+
+          dev_dependencies:
+            flutter_test:
+              sdk: flutter
+
+          flutter:
+            uses-material-design: true
+          EOF
+
+          cat > lib/main.dart <<'EOF'
+          import 'package:flutter/material.dart';
+
+          void main() {
+            runApp(const VibexaApp());
+          }
+
+          class VibexaApp extends StatelessWidget {
+            const VibexaApp({super.key});
+
+            @override
+            Widget build(BuildContext context) {
+              return MaterialApp(
+                debugShowCheckedModeBanner: false,
+                title: 'VIBEXA',
+                theme: ThemeData.dark().copyWith(
+                  scaffoldBackgroundColor: const Color(0xFF10091F),
+                  colorScheme: ColorScheme.fromSeed(
+                    seedColor: const Color(0xFF9B4DFF),
+                    brightness: Brightness.dark,
+                  ),
+                ),
+                home: const HomeScreen(),
+              );
+            }
+          }
+
+          class HomeScreen extends StatefulWidget {
+            const HomeScreen({super.key});
+
+            @override
+            State<HomeScreen> createState() => _HomeScreenState();
+          }
+
+          class _HomeScreenState extends State<HomeScreen> {
+            int selectedIndex = 0;
+
+            final rooms = [
+              ['🔥 Pakistani Party', '24 people', 'PK'],
+              ['💜 Friendship Lounge', '18 people', 'FR'],
+              ['🎵 Music & Fun', '32 people', 'MF'],
+              ['🌙 Late Night Talk', '12 people', 'NT'],
+            ];
+
+            @override
+            Widget build(BuildContext context) {
+              return Scaffold(
+                appBar: AppBar(
+                  backgroundColor: const Color(0xFF10091F),
+                  title: const Text(
+                    'VIBEXA',
+                    style: TextStyle(
+                      color: Color(0xFFCB8CFF),
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 3,
+                    ),
+                  ),
+                  actions: [
+                    const Icon(Icons.monetization_on, color: Colors.amber),
+                    const SizedBox(width: 5),
+                    const Text('1000'),
+                    const SizedBox(width: 15),
+                  ],
+                ),
+                body: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    const Text(
+                      'Welcome to VIBEXA 💜',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Connect. Talk. Enjoy.',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                    const SizedBox(height: 20),
+                    TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Search rooms and friends...',
+                        prefixIcon: const Icon(Icons.search),
+                        filled: true,
+                        fillColor: const Color(0xFF241638),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Categories',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        category('🎤 Voice'),
+                        category('🎵 Music'),
+                        category('💬 Chat'),
+                        category('🎮 Games'),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Trending Rooms 🔥',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ...rooms.map((room) => roomCard(room)),
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFF8B35E8),
+                            Color(0xFF451C83),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Create Your Party 🎉',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text('Invite friends and start talking!'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                bottomNavigationBar: NavigationBar(
+                  backgroundColor: const Color(0xFF1A1028),
+                  selectedIndex: selectedIndex,
+                  onDestinationSelected: (index) {
+                    setState(() {
+                      selectedIndex = index;
+                    });
+                  },
+                  destinations: const [
+                    NavigationDestination(
+                      icon: Icon(Icons.home),
+                      label: 'Home',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.explore),
+                      label: 'Discover',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.mic),
+                      label: 'Party',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.chat),
+                      label: 'Messages',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.person),
+                      label: 'Profile',
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            Widget category(String name) {
+              return Chip(
+                backgroundColor: const Color(0xFF392052),
+                label: Text(name),
+              );
+            }
+
+            Widget roomCard(List<String> room) {
+              return Card(
+                color: const Color(0xFF241638),
+                margin: const EdgeInsets.only(bottom: 12),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: const Color(0xFF8B35E8),
+                    child: Text(room[2]),
+                  ),
+                  title: Text(room[0]),
+                  subtitle: Text('👥 ${room[1]}'),
+                  trailing: const Icon(
+                    Icons.arrow_forward_ios,
+                    color: Colors.purpleAccent,
+                  ),
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Voice room coming soon!',
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            }
+          }
+          EOF
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build Android APK
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: VIBEXA-Android-APK
+          path: build/app/outputs/flutter-apk/app-release.apk
